@@ -14,7 +14,7 @@ file:
 
 statements:
     statement statements
-    | statement
+    | EPS
 
 statement:
     compound_stmt
@@ -22,14 +22,11 @@ statement:
 
 // empty lines should not contain any symbols (even ws), otherwise it's an error
 simple_stmt:
-    assignment NEWLINE
+    expr NEWLINE
     | NEWLINE
 
-assignment:
-    IDENTIFIER EQ_SIGN expr
-
 // expr in `if` must be of type int
-// expr in `if` must be of special `range` type
+// expr in `for` must be of special `range` type
 compound_stmt:
     IF_KW expr COLON_SIGN NEWLINE INDENT statements DEDENT
     | FOR_KW IDENTIFIER IN_KW expr COLON_SIGN NEWLINE INDENT statements DEDENT
@@ -37,18 +34,27 @@ compound_stmt:
 // all expressions will be typed and the types will be inferred during semantic
 // analysis
 
+// See 2.2 of bison documentation for operator support
+// TODO: there's still no list of arguments. I'm thinking on fixed number of
+arguments for each possible function
 expr:
-    expr '+' term
-    | term
-
-term:
-    term '*' factor
-    | factor
-
-factor:
     NUMBER
-    | IDENTIFIER LPAREN expr RPAREN
+    | IDENTIFIER '('  ')'
     | IDENTIFIER
+    | '(' expr ')'
+    | expr '+' expr
+    | expr '*' expr
+    | assignment
+
+// TODO: precedance
+assignment:
+    IDENTIFIER '=' expr
+
+fun:
+    'read'
+    | 'print'
+    | 'int'
+    | 'str'
 
 
 ```
@@ -99,6 +105,11 @@ CONST | Численная константа
   если последующие присвоения не согласуются по типам, то будем докладывать
   ошибку. Btw, поскольку это будет уже семантический анализ, то нам хорошо бы
   хранить позиции начала и конца каждой ноды в AST.
+- Инфиксные операторы легче всего определять не внутри грамматики а положиться
+  на уже встроенный в bison механизм. Он подробно описан в примере в пункте
+  2.2 (Infix notation calculator)
+- 3.7.13 описывает виды деклараций (например %union, %type и т.п.)
+- в 5.3 обсуждается приоритет операторов
 
 if kek > 0:
     a = 10

@@ -1,0 +1,126 @@
+Проверяющий             Модификация                                                         Результат  Язык
+НВ                      to python + while                                                   ok         antlr
+НВ                      **: 2**3**2=2**(3**2)=2**9=512                                      antlr
+НВ                      for while                                                           ok         antlr
+АС                      default guard                                                       ok         antlr
+НВ                      if while                                                            ok         antlr
+АС                      1) обработать ошибку нет перем 2) запретить повторное присваивание  ok         antlr
+НВ                      if while                                                            antlr
+НВ                      min max & fix sup sub                                               ok         antlr
+НВ                      if while + чередование 10101010                                     ok         antlr
+НВ                      else elif                                                           ok         antlr
+ДС                      % и читабельная ошбика                                              java
+НВ                      if while                                                            ok         antlr
+НВ                      досдача                                                             ok         antlr
+АС                      elif                                                                ok         antlr
+НВ                      for elif                                                            ok         antlr
+НВ                      досдача                                                             ok         antlr
+НВ                      if + while                                                          ok         antlr
+НВ                      if + while                                                          ok         antlr
+НВ                      gcd + isPrime                                                       ok         antlr
+ДС                      комментарии                                                         antlr
+ДС                      реализровать скобки, массивы + примеры                              antlr
+ДС                      codestyle? + удаление лишних скобок                                 antlr
+АС                      (чтобы можно было запустить)                                        ok         happy
+НВ                      ok                                                                  antlr
+НВ                      **                                                                  ok         antlr
+ДС                      глобальные переменные                                               ok         antlr
+ДС                      sqrt                                                                ok         antlr
+ДС                      ok                                                                  antlr
+ДС                      if else + циклы, bool                                               antlr
+ДС                      ok                                                                  antlr
+ДС                      мало                                                                not        antlr
+ДС                      вложенные операции                                                  antlr
+АС                      с-style фигурные скобки                                             ok         antlr
+АС                      оператор на ваш выбор                                               ok         antlr
+АС                      добавить тернарную операцию                                         ok         antlr
+АС                      for                                                                 ok         antlr
+НВ                      подсвета строк                                                      ok         antlr
+АС                      добавить любой оператор                                             ok         antlr
+АС                      switch                                                              ok         antlr
+АС                      запретить повторно присваивать                                      ok         antlr
+АС                      \vec                                                                ok         antlr
+НВ                      if else elif while                                                  next       antlr
+НВ                      if else while                                                       ok         antlr
+НВ                      подсветка экранирования                                             ok         antlr
+НВ                      if else elif while                                                  next       antlr
+ДС                      тернарный оператор                                                  antlr
+ДС                      малое подмножество языка                                            not        haskell (happy)
+ДС                      ok                                                                  antlr
+ДС                      else                                                                ok         antlr
+ДС                      ok                                                                  antlr
+АС                      ok                                                                  antlr
+НВ                      чередование                                                         ok         antlr
+НВ                      a_i^2                                                               ok         antlr
+НВ                      чередование  и одинаковой длины                                     ok         antlr
+НВ                      ok                                                                  antlr
+АС                      for по убыванию                                                     ok         antlr
+НВ                      if while                                                            ok         happy
+АС                      пробел перед запятой, пробел после имени ф-ии - убрать; C-style {}  ok         antlr
+НВ                      в python                                                            ok         antlr
+НВ                      while                                                               ok         antlr
+НВ                      ok                                                                  antlr
+АС                      for                                                                 ok         antlr
+НВ                      2**3**2 = 512                                                       ok         antlr
+ДС                      файл                                                                C++
+ДС                      ok                                                                  antlr
+АС                      добавить тернарный оператор                                         ok         antlr
+АС                      elif                                                                ok         antlr
+АС                      поддержать **                                                       ok         antlr
+АС                      if                                                                  ok         antlr
+НВ                      while block                                                         ok         antlr
+НВ                      a, b = b, a                                                         ok
+НВ                      sum min max                                                         ok         antlr
+ДС                      валидация функций                                                   ok         antlr
+ДС
+НВ                      ! -- факториал                                                      ok         antlr
+ДС                      интеграционный тест                                                 ok         antlr
+ДС                      ok                                                                  antlr
+НВ                      while for                                                           ok         antlr
+НВ                      frac sqrt                                                           ok
+ДС
+НВ                      два и более кортеджи                                                ok
+вложенность, Map, Pair  java
+НВ                      унарный минус                                                       ok         antlr
+НВ                      while                                                               ok
+ГК                      уже сдал
+ГК                      строка через конкатенацию                                           ok         antlr
+ГК                      функция is_prime                                                    ok         antlr
+ГК                      нижний индекс, fraq, text                                           ok         antlr
+ГК                      неявка
+ДС                      покрасить                                                           ok         antlr
+ДС                      ok                                                                  antlr
+ГК                      неявка
+ГК                      elif else                                                           ok         antlr
+НВ                      sum min                                                             antlr
+ГК                      правоассоциативное возведение в степень                             ok         antlr
+ГК                      сортировка инклюдов else else if                                    ok         antlr
+ГК                      уже сдал
+АС                      добавить тесты, которые демонстрируют все возможности, elif         ok         antlr
+АС                      1) изменить форматирование switch 2) java-style {}                  ok         antlr
+АС                      если переменной нет, то ее значение 0                               ok         antlr
+АС                      поддержать \sum                                                     ok         antlr
+АС                      поддержать \frac                                                    ok         antlr
+АС                      сделать корень степени                                              ok         antlr
+АС                      добавить факториал                                                  ok         antlr (go)
+АС                      унарный минус                                                       ok         antlr (python)
+АС                      продолжать вычисления при делении на 0                              ok         antlr
+АС                      switch                                                              ok         antlr
+АС                      при арифметической ошибке продолжать вычисления                     ok         antlr
+АС                      логический оператор                                                 ok         antlr
+АС                      C_n^k                                                               ok         antlr
+АС                      do while, алгоритм Евклида, рекурсия                                ok         antlr
+АС                      (верхние и нижие индексы)                                           antlr
+НВ                      фигурные скобки подсветить                                          ok         antlr
+НВ                      while + и сделать 10101010101010101                                 antlr
+НВ                      else elif                                                           ok         antlr
+НВ                      if; while + по шаблону 1010101010                                   ok         antlr
+НВ                      (верхние и нижие индексы)                                           antlr
+НВ                      old                                                                 ok         antlr
+НВ                      Радужная скобки                                                     antlr
+НВ                      if else elif                                                        ok         antlr
+НВ                      Радужная скобки                                                     ok         antlr
+ДС                      расширить множество операций                                        antlr
+ДС                      не объяснила что происходит в коде                                  antlr
+ДС                      вложенный if                                                        antlr
+ДС                      ok                                                                  antlr
