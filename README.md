@@ -37,18 +37,20 @@ compound_stmt:
 // See 2.2 of bison documentation for operator support
 // TODO: there's still no list of arguments. I'm thinking on fixed number of
 arguments for each possible function
+// TODO: precedance for '=', '+' and '*'
 expr:
     NUMBER
-    | IDENTIFIER '('  ')'
     | IDENTIFIER
+    | IDENTIFIER '=' expr
+    | IDENTIFIER '(' arglist ')'
     | '(' expr ')'
     | expr '+' expr
     | expr '*' expr
     | assignment
 
-// TODO: precedance
-assignment:
-    IDENTIFIER '=' expr
+arglist:
+    | arglist ',' expr
+    | expr
 
 fun:
     'read'
