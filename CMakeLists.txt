@@ -66,12 +66,13 @@ endif()
 #                                 Dependencies                                 #
 ################################################################################
 
+set(USE_CPPUTILS ON)
 set(USE_GTEST ON)
 set(USE_FMT OFF)
 set(USE_RANGEV3 ON)
-set(USE_RE2 OFF)
-set(USE_JSON OFF)
-set(USE_SPDLOG OFF)
+set(USE_RE2 ON)
+set(USE_JSON ON)
+set(USE_SPDLOG ON)
 
 include(cmake/ahmad1337_deps.cmake)
 

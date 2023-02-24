@@ -12,6 +12,17 @@ include(FetchContent)
 
 set(DEP_LIBS "")
 
+if (USE_CPPUTILS)
+    FetchContent_Declare(
+        cpputils
+        URL https://github.com/A-Ih/cpputils/archive/refs/heads/main.zip
+        )
+    message("Fetching cpputils...")
+    FetchContent_MakeAvailable(cpputils)
+    message("Done")
+    list(APPEND DEP_LIBS cpputils::cpputils)
+endif()
+
 if (USE_GTEST)
     FetchContent_Declare(
         googletest

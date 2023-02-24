@@ -6,14 +6,6 @@ then
     exit 1
 fi
 
-if [ ! -d ./cpputils ]
-then
-    # NOTE: I count on the fact that `cpputils` is one of the submodules needed
-    # for development
-    echo "Clone this repo with all of the submodules: git clone --depth=1"
-    exit 1
-fi
-
 additional_opts=""
 build_dir=""
 if [ "$1" = "debug" ]
