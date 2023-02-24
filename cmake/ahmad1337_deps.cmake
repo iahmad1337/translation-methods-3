@@ -12,80 +12,69 @@ include(FetchContent)
 
 set(DEP_LIBS "")
 
-if (USE_CPPUTILS)
+macro(AddUrlLib name url lib_target)
     FetchContent_Declare(
-        cpputils
-        URL https://github.com/A-Ih/cpputils/archive/refs/heads/main.zip
+        ${name}
+        URL ${url}
         )
-    message("Fetching cpputils...")
-    FetchContent_MakeAvailable(cpputils)
+    message("Fetching ${name}...")
+    FetchContent_MakeAvailable(${name})
     message("Done")
-    list(APPEND DEP_LIBS cpputils::cpputils)
+    list(APPEND DEP_LIBS ${lib_target})
+endmacro()
+
+if (USE_CPPUTILS)
+    AddUrlLib(
+        cpputils
+        https://github.com/A-Ih/cpputils/archive/refs/heads/main.zip
+        cpputils::cpputils
+        )
 endif()
 
 if (USE_GTEST)
-    FetchContent_Declare(
+    AddUrlLib(
         googletest
-        URL https://github.com/A-Ih/googletest/archive/refs/heads/main.zip
+        https://github.com/A-Ih/googletest/archive/refs/heads/main.zip
+        gtest_main
         )
-    message("Fetching googletest...")
-    FetchContent_MakeAvailable(googletest)
-    message("Done")
-    list(APPEND DEP_LIBS gtest_main)
 endif()
 
 if(USE_FMT)
-    FetchContent_Declare(
+    AddUrlLib(
         fmt
-        URL https://github.com/A-Ih/fmt/archive/refs/heads/master.zip
+        https://github.com/A-Ih/fmt/archive/refs/heads/master.zip
+        fmt::fmt
         )
-    message("Fetching fmt...")
-    FetchContent_MakeAvailable(fmt)
-    message("Done")
-    list(APPEND DEP_LIBS fmt::fmt)
 endif()
 
 if(USE_RANGEV3)
-    FetchContent_Declare(
+    AddUrlLib(
         range-v3
-        URL https://github.com/A-Ih/range-v3/archive/refs/heads/master.zip
+        https://github.com/A-Ih/range-v3/archive/refs/heads/master.zip
+        range-v3::range-v3
         )
-    message("Fetching range-v3...")
-    FetchContent_MakeAvailable(range-v3)
-    message("Done")
-    list(APPEND DEP_LIBS range-v3::range-v3)
 endif()
 
 if(USE_RE2)
-    FetchContent_Declare(
+    AddUrlLib(
         re2
-        URL https://github.com/A-Ih/re2/archive/refs/heads/main.zip
+        https://github.com/A-Ih/re2/archive/refs/heads/main.zip
+        re2::re2
         )
-    message("Fetching re2...")
-    set(RE2_BUILD_TESTING OFF)
-    FetchContent_MakeAvailable(re2)
-    message("Done")
-    list(APPEND DEP_LIBS re2::re2)
 endif()
 
 if(USE_JSON)
-    FetchContent_Declare(
+    AddUrlLib(
         json
-        URL https://github.com/nlohmann/json/archive/refs/heads/master.zip
+        https://github.com/nlohmann/json/archive/refs/heads/master.zip
+        nlohmann_json::nlohmann_json
         )
-    message("Fetching json...")
-    FetchContent_MakeAvailable(json)
-    message("Done")
-    list(APPEND DEP_LIBS nlohmann_json::nlohmann_json)
 endif()
 
 if(USE_SPDLOG)
-    FetchContent_Declare(
+    AddUrlLib(
         spdlog
-        URL https://github.com/A-Ih/spdlog/archive/refs/heads/v1.x.zip
+        https://github.com/A-Ih/spdlog/archive/refs/heads/v1.x.zip
+        spdlog::spdlog
         )
-    message("Fetching spdlog...")
-    FetchContent_MakeAvailable(spdlog)
-    message("Done")
-    list(APPEND DEP_LIBS spdlog::spdlog)
 endif()
