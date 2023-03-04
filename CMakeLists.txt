@@ -73,6 +73,7 @@ set(USE_RANGEV3 ON)
 set(USE_RE2 ON)
 set(USE_JSON ON)
 set(USE_SPDLOG ON)
+set(USE_ARGPARSE ON)
 
 include(cmake/ahmad1337_deps.cmake)
 

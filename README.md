@@ -7,7 +7,13 @@
 
 
 FIXME: у бизоновых правил есть приоритет (точно не помню какой), поэтому если я
-неправильно сочиню грамматику, возможны проблемы.
+неправильно сочиню грамматику, возможны проблемы. Т.е. кажется что приоритет
+определяется порядком правил (надо проверить обязательно).
+
+Замечание: питону
+[не важны пустые строчки](https://stackoverflow.com/questions/60143061/meaning-of-an-empty-line-in-python-source-code-file)
+поэтому их можно игнорировать
+
 ```
 file:
     statements EOF
@@ -20,33 +26,33 @@ statement:
     compound_stmt
     | simple_stmt
 
-// empty lines should not contain any symbols (even ws), otherwise it's an error
 simple_stmt:
-    expr NEWLINE
-    | NEWLINE
+    expr
 
 // expr in `if` must be of type int
 // expr in `for` must be of special `range` type
 compound_stmt:
-    IF_KW expr COLON_SIGN NEWLINE INDENT statements DEDENT
-    | FOR_KW IDENTIFIER IN_KW expr COLON_SIGN NEWLINE INDENT statements DEDENT
+    IF_KW expr COLON_SIGN INDENT statements DEDENT
+    | FOR_KW IDENTIFIER IN_KW expr COLON_SIGN INDENT statements DEDENT
 
 // all expressions will be typed and the types will be inferred during semantic
 // analysis
 
 // See 2.2 of bison documentation for operator support
-// TODO: there's still no list of arguments. I'm thinking on fixed number of
-arguments for each possible function
-// TODO: precedance for '=', '+' and '*'
+// TODO: precedance for '=', '<', '+' and other operators
 expr:
     NUMBER
+    | STRING
     | IDENTIFIER
     | IDENTIFIER '=' expr
     | IDENTIFIER '(' arglist ')'
     | '(' expr ')'
+    | expr '!=' expr
+    | expr '==' expr
+    | expr '<' expr
+    | expr '>' expr
     | expr '+' expr
     | expr '*' expr
-    | assignment
 
 arglist:
     | arglist ',' expr
@@ -110,6 +116,7 @@ CONST | Численная константа
 - ввод чисел я думаю через что-то типа паттернматчинга реализовать. Т.е. я через
   примитивное AST поматчусь и если структура подходит под какой-то паттерн, то я
   в соответствии с ним делаю кодген (считать %d или ещё чето).
+- Почему написать напарсить flex-ом мои токены невозможно: https://cs.stackexchange.com/a/77992
 
 if kek > 0:
     a = 10

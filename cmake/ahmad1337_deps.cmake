@@ -12,6 +12,7 @@ include(FetchContent)
 
 set(DEP_LIBS "")
 
+# TODO: try to do a find_package before downloading
 macro(AddUrlLib name url lib_target)
     FetchContent_Declare(
         ${name}
@@ -77,4 +78,12 @@ if(USE_SPDLOG)
         https://github.com/A-Ih/spdlog/archive/refs/heads/v1.x.zip
         spdlog::spdlog
         )
+endif()
+
+if(USE_ARGPARSE)
+    AddUrlLib(
+        argparse
+        https://github.com/A-Ih/argparse/archive/refs/heads/master.zip
+        argparse::argparse
+    )
 endif()
