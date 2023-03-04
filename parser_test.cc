@@ -21,38 +21,38 @@
 #include "ast.hh"
 
 TEST(VisitorTest, BasicAssertions) {
-  auto kek = std::make_shared<TNumber>(42);
-  TNode* ahah = static_cast<TNode*>(kek.get());
+  std::shared_ptr<TNode> t = std::make_shared<TTree>(
+    std::vector<TPtr>{}
+  );
 
-  // std::shared_ptr<TNode> t = std::make_shared<TTree>(
-  //   std::vector<TPtr>{
-  //     std::make_shared<TId>("identifier1"),
-  //     std::make_shared<TString>("string literal 1"),
-  //     std::make_shared<TNumber>(42),
-  //     std::make_shared<TTree>(
-  //       std::vector<TPtr>{
-  //         std::make_shared<TNumber>(228),
-  //         std::make_shared<TId>("identifier2"),
-  //       }
-  //     ),
-  //   }
-  // );
-  //
-  // TStackVisitor sv;
-  // TNameVisitor nv;
-  // auto [stack, name] = std::make_tuple(
-  //     t->accept(&sv, "stack beginning"),
-  //     t->accept(&nv)
-  // );
-  // ASSERT_EQ(stack, "stack beginning:node with 0 children");
-  // ASSERT_EQ(name, "unknown");
-  //
-  // spdlog::info("Started printing AST");
-  // {
-  //   TPrintVisitor pv{std::cout, "    "};
-  //   t->accept(&pv);
-  // }
-  // spdlog::info("Finished printing AST");
+  TStackVisitor sv;
+  TNameVisitor nv;
+  auto [stack, name] = std::make_tuple(
+      t->accept(&sv, "stack beginning"),
+      t->accept(&nv)
+  );
+  ASSERT_EQ(stack, "stack beginning:node with 0 children");
+  ASSERT_EQ(name, "unknown");
+
+  t = std::make_shared<TTree>(
+    std::vector<TPtr>{
+      std::make_shared<TId>("identifier1"),
+      std::make_shared<TString>("string literal 1"),
+      std::make_shared<TNumber>(42),
+      std::make_shared<TTree>(
+        std::vector<TPtr>{
+          std::make_shared<TNumber>(228),
+          std::make_shared<TId>("identifier2"),
+        }
+      ),
+    }
+  );
+  spdlog::info("Started printing AST");
+  {
+    TPrintVisitor pv{std::cout, "    "};
+    t->accept(&pv);
+  }
+  spdlog::info("Finished printing AST");
 }
 
 // Demonstrate some basic assertions.

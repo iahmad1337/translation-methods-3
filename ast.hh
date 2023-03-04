@@ -1,67 +1,19 @@
-#include <cstdio>
+#pragma once
+
 #include <memory>
 #include <iostream>
 #include <vector>
 #include <string>
 #include <type_traits>
-#include <functional>
 
 #include <cpputils/string.hh>
 #include <cpputils/common.hh>
 
-/*******************************************************************************
-*                          Visitable implementation                           *
-*******************************************************************************/
-
-template<typename...>
-struct TypeList {};
-
-namespace detail {
-
-template<typename...>
-struct IAbstractVisitableImpl;
-
-template<typename TVisitor, typename R, typename ...Args>
-struct IAbstractVisitableImpl<TypeList<TVisitor, R, Args...>> {
-    virtual R accept(TVisitor* visitor, Args... args) = 0;
-};
-
-template<typename...>
-struct IKek;
-
-template<typename ...TSigs>
-struct IKek<TypeList<TSigs...>> : IAbstractVisitableImpl<TSigs>... {
-  using IAbstractVisitableImpl<TSigs>::accept...;
-};
-
-template<typename...>
-struct VisitableImpl;
-
-template<typename T, typename TVisitor, typename R, typename ...Args, typename TSigs>
-struct VisitableImpl<T, TypeList<TVisitor, R, Args...>, TSigs> : IKek<TSigs> {
-  R accept(TVisitor* visitor, Args... args) override {
-    return visitor->visit(dynamic_cast<T*>(this), args...);
-  }
-};
-
-}  // namespace detail
-
-template<typename...>
-struct TVisitable;
-
-template<typename TDerived, typename ...TSigs>
-// Provides a default implementation of `accept` method. Iherit from it to not
-// write anything manually
-struct TVisitable<TDerived, TypeList<TSigs...>> : virtual detail::VisitableImpl<TDerived, TSigs, TypeList<TSigs...>>... {
-  using detail::VisitableImpl<TDerived, TSigs, TypeList<TSigs...>>::accept...;
-
-  virtual ~TVisitable() = default;
-};
+#include "visit.hh"
 
 /*******************************************************************************
 *                                   My shit                                   *
 *******************************************************************************/
-
 
 struct TStackVisitor;
 struct TPrintVisitor;
@@ -77,23 +29,35 @@ using TVisitorList = TypeList<
 *                                     Ast                                     *
 *******************************************************************************/
 
-using TNode = detail::IKek<TVisitorList>;
+using TNode = IVisitable<TVisitorList>;
 
 using TPtr = std::shared_ptr<TNode>;
 
 struct TTree : TVisitable<TTree, TVisitorList> {
+  TTree(std::vector<TPtr> children_) : children{std::move(children_)} {}
+
   std::vector<TPtr> children;
 };
 
 struct TNumber : TVisitable<TNumber, TVisitorList> {
+  TNumber(int val_) : val{val_} {}
+
+  static std::shared_ptr<TNumber> make(int val_) {
+    return std::make_shared<TNumber>(val_);
+  }
+
   int val;
 };
 
 struct TString : TVisitable<TString, TVisitorList> {
+  TString(std::string val_) : val{val_} {}
+
   std::string val;
 };
 
 struct TId : TVisitable<TId, TVisitorList> {
+  TId(std::string val_) : val{val_} {}
+
   std::string val;
 };
 
@@ -126,8 +90,7 @@ public:
     : os{os_}, indent{indent_}, indent_level{0} {}
   TPrintVisitor(const TPrintVisitor&) = default;
 
-protected:
-  void visit(TNumber* n, std::string){
+  void visit(TNumber* n){
     AddIndent();
     os << utils::Format("TNumber: `%`\n", n->val);
   }
