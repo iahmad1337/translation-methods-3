@@ -1,64 +1,27 @@
 %require "3.8"
 %debug
 %language "c++"
+/* This option only works when we use variant/union */
 %define api.token.constructor
-%define api.value.type {std::shared_ptr<TTree>}
+%define api.value.type variant
 %define api.value.automove
 %define parse.assert
+%define parse.error detailed
+%define parse.trace
 %locations
 
+/* See 3.7.15 for %code directive details */
 %code requires // *.hh
 {
 #include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
 
+#include "ast.hh"
+
   using string_uptr = std::unique_ptr<std::string>;
   using string_uptrs = std::vector<string_uptr>;
 
-  using TPtr = std::shared_ptr<TTree>;
-
-  struct TTree {
-    std::string name;
-    std::vector<TPtr> children;
-  };
-  struct TTraverser {
-  public:
-    TTraverser() = delete;
-    TTraverser(std::ostream& os_, const char* indent = "    ")
-      : os{os_}, indent{indent_}, indent_level{0} {}
-    TTraverser(const TTraverser&) = default;
-    TTraverser& operator=(const TTraverser&) = default;
-
-    void traverse(const TTree* t) {
-      for (int i=0; i < indent_level; i++) {
-        os << indent;
-      }
-      os << name << std::endl;
-      indent_level++;
-      for (const auto& c : t->children) {
-        assert(c.use_count() > 0);
-        traverse(c.get());
-      }
-      indent_level--;
-    }
-  private:
-    int indent_level = 0;
-    const char* indent;
-    std::ostream &os;
-  };
-
-  template<typename ...Args>
-  TPtr MakePtr(Args&&... args) {
-    return std::make_shared<TTree>(std::forward<Args>(args)...);
-  }
-
-  TPtr MakeInvocation(std::string identifier, std::shared_ptr<TTree> arglist) {
-    return std::make_shared<TTree>{
-      "invocation",
-      { std::make_shared<TTree>(
-    };
-  }
 }
 
 %code // *.cc
@@ -98,41 +61,107 @@
 
 }
 
+%nterm <std::shared_ptr<TTree>> file;
+%nterm <std::shared_ptr<TTree>> statements;
+%nterm <std::shared_ptr<TTree>> statement;
+%nterm <std::shared_ptr<TTree>> compound_stmt;
+%nterm <std::shared_ptr<TTree>> simple_stmt;
+%nterm <std::shared_ptr<TNode>> expr;
+%nterm <std::shared_ptr<TTree>> arglist;
+
+/* https://www.gnu.org/software/bison/manual/html_node/Token-Decl.html */
+%token <std::string> ID;
 %token <std::string> STRING;
 %token <int> NUMBER;
+%token EOF;
+%token INDENT;
+%token DEDENT;
+%token EQ "==";
+%token NEQ "!=";
+%token LESS "<";
+%token GREATER ">";
+%token PLUS "+";
+%token ASTERISK "*";
+%token ASS "=";
+%token LPAREN "(";
+%token RPAREN ")";
+%token COLON ":";
+
 %printer { yyo << '(' << &$$ << ") " << $$; } <*>;
 %printer { yyo << *$$; } <string_uptr>;
-%token END_OF_FILE 0;
 
 %%
 
 file:
-    statements EOF
+    statements EOF {
+        $$ = std::make_shared<TTree>(
+            "file",
+            $1
+        );
+    }
+;
 
 statements:
-    statement statements
-    | EPS
+    statement statements {
+        $$ = $2
+        auto tptr = dynamic_cast<TTree*>($$.get());
+        assert(tptr != nullptr);
+        assert(tptr->name == "statements");
+        tptr->children.insert(tptr->children.begin(), $1);
+    }
+    | %empty {
+        $$ = std::make_shared<TTree>("statements");
+    }
+;
 
 statement:
-    compound_stmt
-    | simple_stmt
+    compound_stmt {
+        $$ = std::make_shared<TTree>(
+            "compound-statement",
+            $1
+        );
+    }
+    | simple_stmt {
+        $$ = $1;
+    }
+;
 
 simple_stmt:
-    expr
+    expr {
+        $$ = std::make_shared<TTree>(
+            "simple-statement",
+            $1
+        );
+    }
+;
 
 // expr in `if` must be of type int
 // expr in `for` must be of special `range` type
 compound_stmt:
-    "if" expr ":" INDENT statements DEDENT
-    | "for" IDENTIFIER "in" expr ":" INDENT statements DEDENT
+    "if" expr ":" INDENT statements DEDENT {
+        $$ = std::make_shared<TTree>(
+            "if",
+            $2,
+            $5
+        );
+    }
+    | "for" ID "in" expr ":" INDENT statements DEDENT {
+        $$ = std::make_shared<TTree>(
+            "for-loop",
+            $2,
+            $4,
+            $7
+        );
+    }
+;
 
-// all expressions will be typed and the types will be inferred during semantic
-// analysis
+/* all expressions will be typed and the types will be inferred during semantic */
+/* analysis */
 
-// Precedence: https://www.gnu.org/software/bison/manual/html_node/Precedence.html
-// The order of lines determines the precedence.
-// There is a caveat for unary operators:
-// https://www.gnu.org/software/bison/manual/html_node/Contextual-Precedence.html
+/* Precedence: https://www.gnu.org/software/bison/manual/html_node/Precedence.html */
+/* The order of lines determines the precedence. */
+/* There is a caveat for unary operators: */
+/* https://www.gnu.org/software/bison/manual/html_node/Contextual-Precedence.html */
 %right "="
 %left "or"
 %left "and"
@@ -141,30 +170,50 @@ compound_stmt:
 %left "+"
 %left "*"
 
-// TODO: use union in generated C code for values (it's safe in C)
+/* TODO: use union in generated C code for values (it's safe in C) */
 expr:
-    NUMBER
-    | STRING
-    | IDENTIFIER
-    | IDENTIFIER "=" expr
-    | IDENTIFIER "(" arglist ")" { $$ = std::make_shared<TTree>{"invoke", {std::vector{$1}, $3}}'; }
+    NUMBER {
+        $$ = std::make_shared<TNumber>($1);
+    }
+    | STRING {
+        $$ = std::make_shared<TString>($1);
+    }
+    | ID {
+        $$ = std::make_shared<TId>($1);
+    }
+    | ID "=" expr {
+        $$ = std::make_shared<TTree>("assign", std::make_shared<TId>($1), $3);
+    }
+    | ID "(" arglist ")" {
+        $$ = std::make_shared<TTree>("invoke", $1, $3);
+    }
     | "(" expr ")" { $$ = $2; }
-    | expr "or" expr { $$ = std::make_shared<TTree>{"or", {$1, $3}}'; }
-    | expr "and" expr { $$ = std::make_shared<TTree>{"and", {$1, $3}}'; }
-    | "not" expr %prec NOT { $$ = std::make_shared<TTree>{"not", {$2}}'; }
-    | expr "==" expr { $$ = std::make_shared<TTree>{"eq", {$1, $3}}'; }
-    | expr "!=" expr { $$ = std::make_shared<TTree>{"neq", {$1, $3}}'; }
-    | expr "<" expr { $$ = std::make_shared<TTree>{"less", {$1, $3}}'; }
-    | expr ">" expr { $$ = std::make_shared<TTree>{"greater", {$1, $3}}'; }
-    | expr "+" expr { $$ = std::make_shared<TTree>{"add", {$1, $3}}'; }
-    | expr "*" expr { $$ = std::make_shared<TTree>{"multiply", {$1, $3}}'; }
+    | expr "or" expr { $$ = std::make_shared<TTree>("or", $1, $3); }
+    | expr "and" expr { $$ = std::make_shared<TTree>("and", $1, $3); }
+    | "not" expr %prec NOT { $$ = std::make_shared<TTree>("not", $2); }
+    | expr "==" expr { $$ = std::make_shared<TTree>("eq", $1, $3); }
+    | expr "!=" expr { $$ = std::make_shared<TTree>("neq", $1, $3); }
+    | expr "<" expr { $$ = std::make_shared<TTree>("less", $1, $3); }
+    | expr ">" expr { $$ = std::make_shared<TTree>("greater", $1, $3); }
+    | expr "+" expr { $$ = std::make_shared<TTree>("add", $1, $3); }
+    | expr "*" expr { $$ = std::make_shared<TTree>("multiply", $1, $3); }
 ;
 
 arglist:
-    | arglist "," expr { $$ = std::move($1); $$->push_back($3); }
-    | expr { $$ = std::make_shared<TTree>(std::vector<parser::value_type>{$1}); }
-    | %empty
+    arglist "," expr {
+        $$ = $1;
+        auto tptr = dynamic_cast<TTree*>($$.get());
+        assert(tptr != nullptr);
+        $$->children.push_back($3);
+    }
+    | expr {
+        $$ = std::make_shared<TTree>("arglist", $1);
+    }
+    | %empty {
+        $$ = std::make_shared<TTree>("arglist");
+    }
 ;
+
 %%
 
 // The last number return by the scanner is max - 1.
@@ -181,14 +230,34 @@ namespace yy
   // TEXT         "And that's all!"
   // END_OF_FILE
 
-  static
-  parser::symbol_type
-  yylex (value_type* yyval, location_type* yyloc)
-  {
+  auto yylex(value_type* yyval, location_type* yyloc) -> parser::symbol_type {
+    static bool isEof = false;
     static int count = 0;
     const int stage = count;
+
+    static int indentLevel = 0;
+    static bool isStartOfLine = true;
+
+    if (isEof) {
+      std::cerr << "WHAT THE FUCK!!!!!!" << std::endl;
+      std::exit(228);
+    }
     ++count;
     auto loc = parser::location_type{nullptr, stage + 1, stage + 1};
+
+    char c = std::cin.get();
+    switch (c) {
+        case '(':
+            return make_LPAREN(std::move(loc));
+            break;
+        case ')':
+            return make_RPAREN(std::move(loc));
+            return;
+        case '=':
+            c = std::cin.get();
+            if (
+
+    }
     if (stage == 0)
       return parser::make_TEXT (make_string_uptr ("I have numbers for you."), std::move (loc));
     else if (stage < max)
@@ -200,16 +269,12 @@ namespace yy
   }
 
   // Mandatory error function
-  void
-  parser::error (const parser::location_type& loc, const std::string& msg)
-  {
+  void parser::error (const parser::location_type& loc, const std::string& msg) {
     std::cerr << loc << ": " << msg << '\n';
   }
 }
 
-int
-main (int argc, const char *argv[])
-{
+int main (int argc, const char *argv[]) {
   if (2 <= argc && isdigit (static_cast<unsigned char> (*argv[1])))
     {
       auto maxl = strtol (argv[1], nullptr, 10);

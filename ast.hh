@@ -1,41 +1,30 @@
 #pragma once
 
-#include <memory>
+#include <cpputils/common.hh>
+#include <cpputils/string.hh>
 #include <iostream>
-#include <vector>
+#include <memory>
 #include <string>
 #include <type_traits>
-
-#include <cpputils/string.hh>
-#include <cpputils/common.hh>
+#include <vector>
 
 #include "visit.hh"
 
-/*******************************************************************************
-*                                   My shit                                   *
-*******************************************************************************/
-
-struct TStackVisitor;
 struct TPrintVisitor;
 struct TNameVisitor;
 
-using TVisitorList = TypeList<
-  TypeList<TStackVisitor, std::string, std::string>,
-  TypeList<TPrintVisitor, void>,
-  TypeList<TNameVisitor, std::string>
->;
-
-/*******************************************************************************
-*                                     Ast                                     *
-*******************************************************************************/
+using TVisitorList = TypeList<TypeList<TPrintVisitor, void>,
+                              TypeList<TNameVisitor, std::string> >;
 
 using TNode = IVisitable<TVisitorList>;
 
 using TPtr = std::shared_ptr<TNode>;
 
 struct TTree : TVisitable<TTree, TVisitorList> {
-  TTree(std::vector<TPtr> children_) : children{std::move(children_)} {}
+  template<typename ...Args>
+  TTree(std::string name_, Args&&... children_) : name{std::move(name_)}, children{std::forward<Args>(children_)...} {}
 
+  std::string name;
   std::vector<TPtr> children;
 };
 
@@ -62,38 +51,21 @@ struct TId : TVisitable<TId, TVisitorList> {
 };
 
 /*******************************************************************************
-*                                  Visitors                                   *
-*******************************************************************************/
-
-struct TStackVisitor {
-  std::string visit(TNumber* n, std::string stack) {
-    return stack + ":number " + utils::ToString(n->val);
-  }
-
-  std::string visit(TString* str, std::string stack) {
-    return stack + ":string " + str->val;
-  }
-
-  std::string visit(TId* id, std::string stack) {
-    return stack + ":id " + id->val;
-  }
-
-  std::string visit(TTree* node, std::string stack) {
-    return stack + ":node with " + utils::ToString(node->children.size()) + " children";
-  }
-};
+ *                                  Visitors                                   *
+ *******************************************************************************/
 
 struct TPrintVisitor {
-public:
+ public:
   TPrintVisitor() = delete;
   TPrintVisitor(std::ostream& os_, const char* indent_ = "    ")
-    : os{os_}, indent{indent_}, indent_level{0} {}
+      : os{os_}, indent{indent_}, indent_level{0} {}
   TPrintVisitor(const TPrintVisitor&) = default;
 
-  void visit(TNumber* n){
+  void visit(TNumber* n) {
     AddIndent();
     os << utils::Format("TNumber: `%`\n", n->val);
   }
+
   void visit(TString* str) {
     AddIndent();
     os << utils::Format("TString: `%`\n", str->val);
@@ -114,14 +86,14 @@ public:
     indent_level--;
   }
 
-private:
+ private:
   void AddIndent() {
     for (int i = 0; i < indent_level; i++) {
       os << indent;
     }
   }
 
-  std::ostream &os;
+  std::ostream& os;
   const char* indent;
   int indent_level = 0;
 };
@@ -130,17 +102,16 @@ struct TNameVisitor {
   std::string visit(TNumber*) { return "number"; }
   std::string visit(TString*) { return "string"; }
   std::string visit(TId*) { return "identifier"; }
-  std::string visit(TTree*) { return "unknown"; }
+  std::string visit(TTree*) { return "tree"; }
 };
 
-template<typename T>
+template <typename T>
 T& GetInstance() {
   static T instance{};
   return instance;
 }
 
-template<typename ...Args>
+template <typename... Args>
 TPtr MakePtr(Args&&... args) {
   return std::make_shared<TTree>(std::forward<Args>(args)...);
 }
-

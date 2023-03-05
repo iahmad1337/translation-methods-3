@@ -1,40 +1,43 @@
 #pragma once
 
 /*******************************************************************************
-*                          Visitable implementation                           *
-*******************************************************************************/
+ *                          Visitable implementation                           *
+ *******************************************************************************/
 
-template<typename...>
+template <typename...>
 struct TypeList {};
 
 namespace detail {
 
-template<typename...>
+template <typename...>
 struct IAbstractVisitable;
 
-template<>
+template <>
 struct IAbstractVisitable<TypeList<>> {
   void accept() = delete;
 
   virtual ~IAbstractVisitable() = default;
 };
 
-template<typename TVisitor, typename R, typename ...Args, typename ...TSigTail>
-struct IAbstractVisitable<TypeList<TypeList<TVisitor, R, Args...>, TSigTail...>> : IAbstractVisitable<TypeList<TSigTail...>> {
+template <typename TVisitor, typename R, typename... Args, typename... TSigTail>
+struct IAbstractVisitable<TypeList<TypeList<TVisitor, R, Args...>, TSigTail...>>
+    : IAbstractVisitable<TypeList<TSigTail...>> {
   using TBase = IAbstractVisitable<TypeList<TSigTail...>>;
   using TBase::accept;
 
   virtual R accept(TVisitor* visitor, Args... args) = 0;  // TODO: nolint
 };
 
-template<typename...>
+template <typename...>
 struct VisitableImpl;
 
-template<typename T, typename TSigs>
+template <typename T, typename TSigs>
 struct VisitableImpl<T, TypeList<>, TSigs> : IAbstractVisitable<TSigs> {};
 
-template<typename T, typename TVisitor, typename R, typename ...Args, typename ...TRestSigs, typename TSigs>
-struct VisitableImpl<T, TypeList<TypeList<TVisitor, R, Args...>, TRestSigs...>, TSigs> : VisitableImpl<T, TypeList<TRestSigs...>, TSigs> {
+template <typename T, typename TVisitor, typename R, typename... Args,
+          typename... TRestSigs, typename TSigs>
+struct VisitableImpl<T, TypeList<TypeList<TVisitor, R, Args...>, TRestSigs...>,
+                     TSigs> : VisitableImpl<T, TypeList<TRestSigs...>, TSigs> {
   using TBase = VisitableImpl<T, TypeList<TRestSigs...>, TSigs>;
   using TBase::accept;
 
@@ -45,16 +48,17 @@ struct VisitableImpl<T, TypeList<TypeList<TVisitor, R, Args...>, TRestSigs...>, 
 
 }  // namespace detail
 
-template<typename TVisitorList>
+template <typename TVisitorList>
 // An abstract class representing an object which can be visited by the any
 // visitor in the list
 using IVisitable = detail::IAbstractVisitable<TVisitorList>;
 
-template<typename...>
+template <typename...>
 struct TVisitable;
 
-template<typename TDerived, typename ...TSigs>
+template <typename TDerived, typename... TSigs>
 // Provides a default implementation of `accept` method. Iherit from it to not
 // write anything manually
-struct TVisitable<TDerived, TypeList<TSigs...>> : detail::VisitableImpl<TDerived, TypeList<TSigs...>, TypeList<TSigs...>> {};
-
+struct TVisitable<TDerived, TypeList<TSigs...>>
+    : detail::VisitableImpl<TDerived, TypeList<TSigs...>, TypeList<TSigs...>> {
+};
