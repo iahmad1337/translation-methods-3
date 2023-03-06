@@ -22,26 +22,76 @@
 #include "driver.hh"
 #include "parser.hh"
 
-TEST(TokenizerTest, Tokens) {
-  std::string contents =
-R"(int print hello 42 "123")";
+using TParam = std::pair<std::string, std::vector<std::pair<yy::parser::token_kind_type, std::string>>>;
+
+struct TTokenizerTest : public ::testing::TestWithParam<TParam> {};
+
+using tkt = yy::parser::token_kind_type;
+const std::vector<TParam> PARAMS = {
+  {
+    R"(int print hello 42 "123")",
+    {
+      {tkt::ID, "int"},
+      {tkt::ID, "print"},
+      {tkt::ID, "hello"},
+      {tkt::NUMBER, "42"},
+      {tkt::STRING, "\"123\""},
+    }
+  },
+  {
+    R"(and or not + * : if for == != ())()",
+    {
+      {tkt::AND, "and"},
+      {tkt::OR, "or"},
+      {tkt::NOT, "not"},
+      {tkt::PLUS, "+"},
+      {tkt::ASS, "*"},
+      {tkt::COLON, ":"},
+      {tkt::IF, "if"},
+      {tkt::FOR, "FOR"},
+      {tkt::EQ, "=="},
+      {tkt::NEQ, "!="},
+      {tkt::LPAREN, "("},
+      {tkt::RPAREN, "("},
+      {tkt::RPAREN, "("},
+      {tkt::LPAREN, "("},
+    }
+  },
+  {
+    R"(if 42 :\n    print("saw 42")\n print())",
+    {
+      {tkt::IF, "if"},
+      {tkt::NUMBER, "42"},
+      {tkt::COLON, ":"},
+      {tkt::LF, "\n"},
+      {tkt::INDENT, "    "},
+      {tkt::ID, "print"},
+      {tkt::LPAREN, "("},
+      {tkt::STRING, "\"saw 42\""},
+      {tkt::RPAREN, ")"},
+      {tkt::LF, "\n"},
+      {tkt::DEDENT, "???"},
+      {tkt::ID, "print"},
+      {tkt::LPAREN, "("},
+      {tkt::RPAREN, ")"},
+    }
+  },
+};
+
+TEST_P(TTokenizerTest, Tokens) {
+  auto [contents, expected] = GetParam();
   std::stringstream ss{contents};
   TMyLexer lex{&ss};
 
-  using tkt = yy::parser::token_kind_type;
-  std::vector<std::pair<yy::parser::token_kind_type, std::string>> expected = {
-    {tkt::ID, "int"},
-    {tkt::ID, "print"},
-    {tkt::ID, "hello"},
-    {tkt::NUMBER, "42"},
-    {tkt::STRING, "123"},
-  };
   std::vector<std::pair<yy::parser::token_kind_type, std::string>> got;
   while (lex.yylex() != yy::parser::token_kind_type::END_OF_FILE) {
     got.emplace_back(lex.ctx.curTokenKind, lex.ctx.curToken);
   }
+
   EXPECT_EQ(expected, got);
 }
+
+INSTANTIATE_TEST_SUITE_P(SomePrefix, TTokenizerTest, testing::ValuesIn(PARAMS));
 
 TEST(VisitorTest, BasicAssertions) {
   std::shared_ptr<TNode> t = std::make_shared<TTree>("an empty node", std::vector<TPtr>{});
