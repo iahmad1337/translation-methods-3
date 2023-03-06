@@ -19,6 +19,30 @@
 #include "ast.hh"
 #include "cpputils/common.hh"
 
+#include "driver.hh"
+#include "parser.hh"
+
+TEST(TokenizerTest, Tokens) {
+  std::string contents =
+R"(int print hello 42 "123")";
+  std::stringstream ss{contents};
+  TMyLexer lex{&ss};
+
+  using tkt = yy::parser::token_kind_type;
+  std::vector<std::pair<yy::parser::token_kind_type, std::string>> expected = {
+    {tkt::ID, "int"},
+    {tkt::ID, "print"},
+    {tkt::ID, "hello"},
+    {tkt::NUMBER, "42"},
+    {tkt::STRING, "123"},
+  };
+  std::vector<std::pair<yy::parser::token_kind_type, std::string>> got;
+  while (lex.yylex() != yy::parser::token_kind_type::END_OF_FILE) {
+    got.emplace_back(lex.ctx.curTokenKind, lex.ctx.curToken);
+  }
+  EXPECT_EQ(expected, got);
+}
+
 TEST(VisitorTest, BasicAssertions) {
   std::shared_ptr<TNode> t = std::make_shared<TTree>("an empty node", std::vector<TPtr>{});
 
@@ -26,11 +50,11 @@ TEST(VisitorTest, BasicAssertions) {
   auto name = t->accept(&nv);
   ASSERT_EQ(name, "an empty node");
 
-  t = std::make_shared<TTree>(std::vector<TPtr>{
+  t = std::make_shared<TTree>("branch", std::vector<TPtr>{
       std::make_shared<TId>("identifier1"),
       std::make_shared<TString>("string literal 1"),
       std::make_shared<TNumber>(42),
-      std::make_shared<TTree>(std::vector<TPtr>{
+      std::make_shared<TTree>("nested branch", std::vector<TPtr>{
           std::make_shared<TNumber>(228),
           std::make_shared<TId>("identifier2"),
       }),

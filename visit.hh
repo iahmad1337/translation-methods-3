@@ -25,7 +25,7 @@ struct IAbstractVisitable<TypeList<TypeList<TVisitor, R, Args...>, TSigTail...>>
   using TBase = IAbstractVisitable<TypeList<TSigTail...>>;
   using TBase::accept;
 
-  virtual R accept(TVisitor* visitor, Args... args) = 0;  // TODO: nolint
+  virtual R accept(TVisitor* visitor, Args... args) = 0;
 };
 
 template <typename...>
@@ -49,7 +49,7 @@ struct VisitableImpl<T, TypeList<TypeList<TVisitor, R, Args...>, TRestSigs...>,
 }  // namespace detail
 
 template <typename TVisitorList>
-// An abstract class representing an object which can be visited by the any
+// An abstract class representing an object which can be visited by any
 // visitor in the list
 using IVisitable = detail::IAbstractVisitable<TVisitorList>;
 
