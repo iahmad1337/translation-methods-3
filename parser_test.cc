@@ -6,12 +6,12 @@
 // #include <fmt/core.h>
 // #include <fmt/ranges.h>
 
-#include <re2/re2.h>
+// #include <re2/re2.h>
 
-#include <nlohmann/json.hpp>
-#include <range/v3/action/sort.hpp>
-#include <range/v3/action/unique.hpp>
-#include <range/v3/view/all.hpp>
+// #include <nlohmann/json.hpp>
+// #include <range/v3/action/sort.hpp>
+// #include <range/v3/action/unique.hpp>
+// #include <range/v3/view/all.hpp>
 // TODO: there are problems with spdlog and fmt - can't make them work together
 // for now, I think I just have to use them exclusively
 #include <spdlog/spdlog.h>
@@ -29,17 +29,25 @@ struct TTokenizerTest : public ::testing::TestWithParam<TParam> {};
 using tkt = yy::parser::token_kind_type;
 const std::vector<TParam> PARAMS = {
   {
+    "nota bene not",
+    {
+      {tkt::ID, "nota"},
+      {tkt::ID, "bene"},
+      {tkt::NOT, "not"},
+    }
+  },
+  {
     R"(int print hello 42 "123")",
     {
       {tkt::ID, "int"},
       {tkt::ID, "print"},
       {tkt::ID, "hello"},
       {tkt::NUMBER, "42"},
-      {tkt::STRING, "\"123\""},
+      {tkt::STRING, "123"},
     }
   },
   {
-    R"(and or not + * : if for == != ())()",
+    "and or not+*:if for== !=())(",
     {
       {tkt::AND, "and"},
       {tkt::OR, "or"},
@@ -48,32 +56,117 @@ const std::vector<TParam> PARAMS = {
       {tkt::ASS, "*"},
       {tkt::COLON, ":"},
       {tkt::IF, "if"},
-      {tkt::FOR, "FOR"},
+      {tkt::FOR, "for"},
       {tkt::EQ, "=="},
       {tkt::NEQ, "!="},
       {tkt::LPAREN, "("},
-      {tkt::RPAREN, "("},
-      {tkt::RPAREN, "("},
+      {tkt::RPAREN, ")"},
+      {tkt::RPAREN, ")"},
       {tkt::LPAREN, "("},
     }
   },
   {
-    R"(if 42 :\n    print("saw 42")\n print())",
+    "if 42 :\n    print(\"saw 42\")\n print()",
     {
       {tkt::IF, "if"},
       {tkt::NUMBER, "42"},
       {tkt::COLON, ":"},
-      {tkt::LF, "\n"},
-      {tkt::INDENT, "    "},
+      {tkt::LF, ""},
+      {tkt::INDENT, ""},
       {tkt::ID, "print"},
       {tkt::LPAREN, "("},
-      {tkt::STRING, "\"saw 42\""},
+      {tkt::STRING, "saw 42"},
       {tkt::RPAREN, ")"},
-      {tkt::LF, "\n"},
-      {tkt::DEDENT, "???"},
+      {tkt::LF, ""},
+      {tkt::DEDENT, ""},
       {tkt::ID, "print"},
       {tkt::LPAREN, "("},
       {tkt::RPAREN, ")"},
+    }
+  },
+  {
+    R"(
+1
+    2
+    3
+        4
+            5
+    6
+            7
+8)",
+    {
+      {tkt::NUMBER, "1"},
+      {tkt::LF, ""},
+      {tkt::INDENT, ""},
+      {tkt::NUMBER, "2"},
+      {tkt::LF, ""},
+      {tkt::NUMBER, "3"},
+      {tkt::LF, ""},
+      {tkt::INDENT, ""},
+      {tkt::NUMBER, "4"},
+      {tkt::LF, ""},
+      {tkt::INDENT, ""},
+      {tkt::NUMBER, "5"},
+      {tkt::LF, ""},
+      {tkt::DEDENT, ""},
+      {tkt::DEDENT, ""},
+      {tkt::NUMBER, "6"},
+      {tkt::LF, ""},
+      {tkt::INDENT, ""},
+      {tkt::INDENT, ""},
+      {tkt::NUMBER, "7"},
+      {tkt::LF, ""},
+      {tkt::DEDENT, ""},
+      {tkt::DEDENT, ""},
+      {tkt::DEDENT, ""},
+      {tkt::NUMBER, "8"},
+    }
+  },
+  {
+    R"(
+
+1
+        2
+3
+        4
+                5
+
+
+    6
+            7
+8)",
+    {
+      {tkt::NUMBER, "1"},
+      {tkt::LF, ""},
+      {tkt::INDENT, ""},
+      {tkt::INDENT, ""},
+      {tkt::NUMBER, "2"},
+      {tkt::LF, ""},
+      {tkt::DEDENT, ""},
+      {tkt::DEDENT, ""},
+      {tkt::NUMBER, "3"},
+      {tkt::LF, ""},
+      {tkt::INDENT, ""},
+      {tkt::INDENT, ""},
+      {tkt::NUMBER, "4"},
+      {tkt::LF, ""},
+      {tkt::INDENT, ""},
+      {tkt::INDENT, ""},
+      {tkt::NUMBER, "5"},
+      {tkt::LF, ""},
+      {tkt::DEDENT, ""},
+      {tkt::DEDENT, ""},
+      {tkt::DEDENT, ""},
+      {tkt::NUMBER, "6"},
+      {tkt::LF, ""},
+      {tkt::INDENT, ""},
+      {tkt::INDENT, ""},
+      {tkt::NUMBER, "7"},
+      {tkt::LF, ""},
+      {tkt::DEDENT, ""},
+      {tkt::DEDENT, ""},
+      {tkt::DEDENT, ""},
+      {tkt::NUMBER, "8"},
     }
   },
 };
@@ -84,21 +177,20 @@ TEST_P(TTokenizerTest, Tokens) {
   TMyLexer lex{&ss};
 
   std::vector<std::pair<yy::parser::token_kind_type, std::string>> got;
-  while (lex.yylex() != yy::parser::token_kind_type::END_OF_FILE) {
-    got.emplace_back(lex.ctx.curTokenKind, lex.ctx.curToken);
+  for (auto lexRes = lex.mylex(); lexRes.type != yy::parser::token_kind_type::END_OF_FILE; lexRes = lex.mylex()) {
+    got.emplace_back(lexRes.type, lexRes.text);
   }
 
   EXPECT_EQ(expected, got);
 }
 
-INSTANTIATE_TEST_SUITE_P(SomePrefix, TTokenizerTest, testing::ValuesIn(PARAMS));
+INSTANTIATE_TEST_SUITE_P(Parametrized, TTokenizerTest, testing::ValuesIn(PARAMS));
 
 TEST(VisitorTest, BasicAssertions) {
   std::shared_ptr<TNode> t = std::make_shared<TTree>("an empty node", std::vector<TPtr>{});
 
   TNameVisitor nv;
-  auto name = t->accept(&nv);
-  ASSERT_EQ(name, "an empty node");
+  ASSERT_EQ(t->accept(&nv), "tree");
 
   t = std::make_shared<TTree>("branch", std::vector<TPtr>{
       std::make_shared<TId>("identifier1"),
@@ -119,26 +211,26 @@ TEST(VisitorTest, BasicAssertions) {
 }
 
 // Demonstrate some basic assertions.
-TEST(ParserTest, BasicAssertions) {
-  // Expect two strings not to be equal.
-  EXPECT_STRNE("hello", "world");
-  // Expect equality.
-  EXPECT_EQ(7 * 6, 42);
-  std::vector<int> vi{9, 4, 5, 2, 9, 1, 0, 2, 6, 7, 4, 5, 6, 5, 9, 2, 7,
-                      1, 4, 5, 3, 8, 5, 0, 2, 9, 3, 7, 5, 7, 5, 5, 6, 1,
-                      4, 3, 1, 8, 4, 0, 7, 8, 8, 2, 6, 5, 3, 4, 5};
-  vi |= ranges::actions::sort | ranges::actions::unique;
-  // prints: [0,1,2,3,4,5,6,7,8,9]
-  std::string res = fmt::to_string(fmt::join(ranges::views::all(vi), ","));
-  // fmt::println("Hello, the answer is [{}]", res);
-  ASSERT_FALSE(RE2::FullMatch(res, "1,2"));
-  ASSERT_TRUE(RE2::PartialMatch(res, "1,2"));
-
-  using nlohmann::json;
-
-  // spdlog::info has some difficulties converting MakeString to string
-  std::string kek = utils::MakeString()
-                    << json::parse(R"({ "hello" : ["world", 42] })");
-  spdlog::info(kek);
-  spdlog::error("fuck!");
-}
+// TEST(ParserTest, BasicAssertions) {
+//   // Expect two strings not to be equal.
+//   EXPECT_STRNE("hello", "world");
+//   // Expect equality.
+//   EXPECT_EQ(7 * 6, 42);
+//   std::vector<int> vi{9, 4, 5, 2, 9, 1, 0, 2, 6, 7, 4, 5, 6, 5, 9, 2, 7,
+//                       1, 4, 5, 3, 8, 5, 0, 2, 9, 3, 7, 5, 7, 5, 5, 6, 1,
+//                       4, 3, 1, 8, 4, 0, 7, 8, 8, 2, 6, 5, 3, 4, 5};
+//   vi |= ranges::actions::sort | ranges::actions::unique;
+//   // prints: [0,1,2,3,4,5,6,7,8,9]
+//   std::string res = fmt::to_string(fmt::join(ranges::views::all(vi), ","));
+//   // fmt::println("Hello, the answer is [{}]", res);
+//   ASSERT_FALSE(RE2::FullMatch(res, "1,2"));
+//   ASSERT_TRUE(RE2::PartialMatch(res, "1,2"));
+//
+//   using nlohmann::json;
+//
+//   // spdlog::info has some difficulties converting MakeString to string
+//   std::string kek = utils::MakeString()
+//                     << json::parse(R"({ "hello" : ["world", 42] })");
+//   spdlog::info(kek);
+//   spdlog::error("fuck!");
+// }

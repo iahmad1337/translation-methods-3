@@ -44,7 +44,7 @@ struct TMyLexer;
 /* https://www.gnu.org/software/bison/manual/html_node/Token-Decl.html */
 %token <std::string> ID;
 %token <std::string> STRING;
-%token <int> NUMBER;
+%token <std::string> NUMBER;
 %token END_OF_FILE;
 %token INDENT;
 %token DEDENT;
@@ -159,7 +159,7 @@ compound_stmt:
 %nterm <TPtr> expr;
 expr:
     NUMBER {
-        $$ = std::make_shared<TNumber>($1);
+        $$ = std::make_shared<TNumber>(std::stoi($1));
     }
     | STRING {
         $$ = std::make_shared<TString>($1);
