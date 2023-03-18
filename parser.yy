@@ -45,7 +45,6 @@ struct TMyLexer;
 %token <std::string> ID;
 %token <std::string> STRING;
 %token <std::string> NUMBER;
-%token END_OF_FILE;
 %token INDENT;
 %token DEDENT;
 %token LF;
@@ -75,7 +74,7 @@ struct TMyLexer;
 
 %nterm <std::shared_ptr<TTree>> file;
 file:
-    statements END_OF_FILE {
+    statements {
         $$ = std::make_shared<TTree>(
             "file",
             $1
@@ -86,9 +85,19 @@ file:
 
 %nterm <std::vector<TPtr>> statements;
 statements:
-    statements LF statement {
-        $$ = std::move($1);
-        $$.insert($$.begin(), $3);
+    statement rest_statements {
+        $$ = std::vector<TPtr>{};
+        $$.push_back($1);
+        $$.insert($$.end(), $2.begin(), $2.end());
+    }
+;
+
+%nterm <std::vector<TPtr>> rest_statements;
+rest_statements:
+    LF statement rest_statements {
+        $$ = std::vector<TPtr>{};
+        $$.push_back($2);
+        $$.insert($$.end(), $3.begin(), $3.end());
     }
     | %empty {
         $$ = std::vector<TPtr>{};

@@ -7,6 +7,7 @@
 #endif
 
 #include "parser.hh"
+#include "ast.hh"
 
 #undef YY_DECL
 #define YY_DECL int TMyLexer::yylex()
@@ -28,11 +29,6 @@ struct TMyLexer : public yyFlexLexer {
     return _mylex();
   }
 
-  enum class EState {
-    PENDING_DENTS,
-    OTHER,
-  };
-
   struct {
     /// If positive - denotes the number of INDENTs we have to return before
     /// calling lex.yylex() again
@@ -47,7 +43,6 @@ struct TMyLexer : public yyFlexLexer {
     std::string curToken;
     yy::parser::token_kind_type prevTokenKind{};
     yy::parser::token_kind_type curTokenKind{};
-    EState state;
   } ctx;
 
 private:

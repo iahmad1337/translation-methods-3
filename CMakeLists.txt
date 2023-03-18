@@ -92,7 +92,7 @@ set(USE_RANGEV3 OFF)
 set(USE_RE2 OFF)
 set(USE_JSON OFF)
 set(USE_SPDLOG ON)
-set(USE_ARGPARSE OFF)
+set(USE_ARGPARSE ON)
 
 include(cmake/ahmad1337_deps.cmake)
 

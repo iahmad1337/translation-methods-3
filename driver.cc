@@ -23,7 +23,7 @@ TMyLexer::TMyLexRes TMyLexer::_mylex() {
   if (ctx.prevTokenKind == yy::parser::token_kind_type::LF) {
     assert(token_type != yy::parser::token_kind_type::LF);
     if (token_type == yy::parser::token_kind_type::INDENT) {
-      // this is a special kind of token, we should analyze the number of indents
+      // this is a special kind of token that signals that we should analyze the number of indents
       int level = ctx.curToken.size() / 4;
 
       ctx.indentsLeft = level - ctx.currentIndentLevel;
@@ -33,11 +33,9 @@ TMyLexer::TMyLexRes TMyLexer::_mylex() {
         yylex();
         return { ctx.curTokenKind, ctx.curToken, ctx.loc };
       }
-
-      // TODO: sketchy!
       return _mylex();
     } else {
-      // return -level dedents before touching the lexed part and save the lexed
+      // return -level dedents before touching the lexed part
       ctx.indentsLeft = -ctx.currentIndentLevel;
       ctx.currentIndentLevel = 0;
       ctx.pendingToken = true;
@@ -57,7 +55,7 @@ namespace yy
 #define CASE(x) case parser::token_kind_type::x: { return parser::make_##x(loc); }
 
     switch (type) {
-      CASE(END_OF_FILE)
+      CASE(YYEOF)
       CASE(INDENT)
       CASE(DEDENT)
       CASE(LF)

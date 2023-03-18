@@ -59,6 +59,11 @@ LF [ ]*\n
      }
 "*"  {
         ctx.curToken = YYText();
+        ctx.curTokenKind = yy::parser::token_kind_type::ASTERISK;
+        return ctx.curTokenKind;
+     }
+"="  {
+        ctx.curToken = YYText();
         ctx.curTokenKind = yy::parser::token_kind_type::ASS;
         return ctx.curTokenKind;
      }
@@ -151,7 +156,7 @@ LF [ ]*\n
 
 <<EOF>>  {
             ctx.curToken = "";
-            ctx.curTokenKind = yy::parser::token_kind_type::END_OF_FILE;
+            ctx.curTokenKind = yy::parser::token_kind_type::YYEOF;
             return ctx.curTokenKind;
         }
 

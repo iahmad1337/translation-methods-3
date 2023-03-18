@@ -78,7 +78,7 @@ struct TPrintVisitor {
 
   void visit(TTree* node) {
     AddIndent();
-    os << utils::Format("TTree with `%` children\n", node->children.size());
+    os << utils::Format("`%` with % children\n", node->name, node->children.size());
     indent_level++;
     for (auto& c : node->children) {
       c->accept(this);

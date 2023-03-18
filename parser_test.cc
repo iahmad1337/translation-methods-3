@@ -53,7 +53,7 @@ const std::vector<TParam> PARAMS = {
       {tkt::OR, "or"},
       {tkt::NOT, "not"},
       {tkt::PLUS, "+"},
-      {tkt::ASS, "*"},
+      {tkt::ASTERISK, "*"},
       {tkt::COLON, ":"},
       {tkt::IF, "if"},
       {tkt::FOR, "for"},
@@ -169,6 +169,31 @@ const std::vector<TParam> PARAMS = {
       {tkt::NUMBER, "8"},
     }
   },
+  {
+    "a = 1\nb = 2",
+    {
+      {tkt::ID, "a"},
+      {tkt::ASS, "="},
+      {tkt::NUMBER, "1"},
+      {tkt::LF, ""},
+      {tkt::ID, "b"},
+      {tkt::ASS, "="},
+      {tkt::NUMBER, "2"},
+    }
+  },
+  {
+    "a = 1\nprint(a)",
+    {
+      {tkt::ID, "a"},
+      {tkt::ASS, "="},
+      {tkt::NUMBER, "1"},
+      {tkt::LF, ""},
+      {tkt::ID, "print"},
+      {tkt::LPAREN, "("},
+      {tkt::ID, "a"},
+      {tkt::RPAREN, ")"},
+    }
+  },
 };
 
 TEST_P(TTokenizerTest, Tokens) {
@@ -177,7 +202,7 @@ TEST_P(TTokenizerTest, Tokens) {
   TMyLexer lex{&ss};
 
   std::vector<std::pair<yy::parser::token_kind_type, std::string>> got;
-  for (auto lexRes = lex.mylex(); lexRes.type != yy::parser::token_kind_type::END_OF_FILE; lexRes = lex.mylex()) {
+  for (auto lexRes = lex.mylex(); lexRes.type != yy::parser::token_kind_type::YYEOF; lexRes = lex.mylex()) {
     got.emplace_back(lexRes.type, lexRes.text);
   }
 
