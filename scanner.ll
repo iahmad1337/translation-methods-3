@@ -28,7 +28,7 @@
 %}
 
 ID  [A-Za-z_][A-Za-z0-9_]*
-NUMBER [0-9]+
+NUMBER [-]?[0-9]+
 STRING \"[^\n"]+\"
 LF [ ]*\n
 

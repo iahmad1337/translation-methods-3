@@ -1,7 +1,7 @@
 if 1:
-    print("First nested print")
+    print("First nested print\n")
     if 1:
-        print("Second nested print")
+        print("Second nested print\n")
         if 0:
-            print("You should never see this message!")
-    print("this print should have the correct nesting")
+            print("You should never see this message!\n")
+    print("this print should have the correct nesting\n")

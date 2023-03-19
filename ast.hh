@@ -135,6 +135,9 @@ struct TRange {
 };
 
 int InRange(const struct TRange* r, int i) {
+  if (r->from == r->to && r->step == 0) {
+    return 0;  // empty range
+  }
   if (r->from < r->to) {
     return r->from <= i && i <= r->to;
   } else {
@@ -237,7 +240,7 @@ struct TPyToCVisitor {
           case 3:
             return utils::Format("{ .from = %, .to = %, .step = % }", args[0], args[1], args[2]);
           default:
-            return "{ .from = 0, .to = -1, .step = 1 }";  // empty range on invalid call
+            return "{ .from = 0, .to = 0, .step = 0 }";  // empty range on invalid call
         }
       } else {
         return utils::Format("%(%)", funcName, utils::Join(", ", args.begin(), args.end()));
