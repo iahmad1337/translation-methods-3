@@ -19,14 +19,14 @@ add_custom_command(
 )
 
 add_executable(parser_test parser_test.cc driver.cc scanner.cc parser.cc)
-add_executable(parser main.cc driver.cc scanner.cc parser.cc)
+add_executable(ast_printer ast_printer.cc driver.cc scanner.cc parser.cc)
 
 ################################################################################
 #                            Common compile options                            #
 ################################################################################
 
 target_compile_options(parser_test PRIVATE -Wall -Wextra -Wshadow=compatible-local -Wno-sign-compare -pedantic)
-target_compile_options(parser PRIVATE -Wall -Wextra -Wshadow=compatible-local -Wno-sign-compare -pedantic)
+target_compile_options(ast_printer PRIVATE -Wall -Wextra -Wshadow=compatible-local -Wno-sign-compare -pedantic)
 
 ################################################################################
 #                                  Sanitizers                                  #
@@ -47,9 +47,9 @@ if (USE_SANITIZERS)
 
   # NOTE: these strings should be repeated for all of the targets
   target_compile_options(parser_test PUBLIC ${COMPILE_OPTS})
-  target_compile_options(parser PUBLIC ${COMPILE_OPTS})
+  target_compile_options(ast_printer PUBLIC ${COMPILE_OPTS})
   target_link_options(parser_test PUBLIC ${LINK_OPTS})
-  target_link_options(parser PUBLIC ${LINK_OPTS})
+  target_link_options(ast_printer PUBLIC ${LINK_OPTS})
 endif()
 
 ################################################################################
@@ -65,7 +65,7 @@ if (CMAKE_BUILD_TYPE MATCHES "Debug")
   # doesn't rewrite existing options:
   # https://cmake.org/cmake/help/latest/command/target_compile_options.html
   target_compile_options(parser_test PUBLIC ${DEBUG_COMPILE_OPTS})
-  target_compile_options(parser PUBLIC ${DEBUG_COMPILE_OPTS})
+  target_compile_options(ast_printer PUBLIC ${DEBUG_COMPILE_OPTS})
 endif()
 
 ################################################################################
@@ -75,10 +75,10 @@ endif()
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   message(STATUS "Enabling libc++...")
   target_compile_options(parser_test PUBLIC -stdlib=libc++)
-  target_compile_options(parser PUBLIC -stdlib=libc++)
+  target_compile_options(ast_printer PUBLIC -stdlib=libc++)
 
   target_link_options(parser_test PUBLIC -stdlib=libc++)
-  target_link_options(parser PUBLIC -stdlib=libc++)
+  target_link_options(ast_printer PUBLIC -stdlib=libc++)
 endif()
 
 ################################################################################
@@ -97,4 +97,4 @@ set(USE_ARGPARSE ON)
 include(cmake/ahmad1337_deps.cmake)
 
 target_link_libraries(parser_test ${DEP_LIBS})
-target_link_libraries(parser ${DEP_LIBS})
+target_link_libraries(ast_printer ${DEP_LIBS})
