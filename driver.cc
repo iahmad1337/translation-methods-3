@@ -51,6 +51,7 @@ namespace yy
 {
   parser::symbol_type yylex(TMyLexer* lex) {
     auto [type, text, loc] = lex->mylex();
+    spdlog::info("reading `{}` (type {})", text, type);
 #define CASE_T(x) case parser::token_kind_type::x: { return parser::make_##x(text, loc); }
 #define CASE(x) case parser::token_kind_type::x: { return parser::make_##x(loc); }
 
@@ -64,11 +65,13 @@ namespace yy
       CASE(LESS)
       CASE(GREATER)
       CASE(PLUS)
+      CASE(MINUS)
       CASE(ASTERISK)
       CASE(ASS)
       CASE(LPAREN)
       CASE(RPAREN)
       CASE(COLON)
+      CASE(COMMA)
       CASE(IF)
       CASE(FOR)
       CASE(IN)

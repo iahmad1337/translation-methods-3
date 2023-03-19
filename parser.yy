@@ -53,6 +53,7 @@ struct TMyLexer;
 %token LESS "<";
 %token GREATER ">";
 %token PLUS "+";
+%token MINUS "-";
 %token ASTERISK "*";
 %token ASS "=";
 %token LPAREN "(";
@@ -64,9 +65,9 @@ struct TMyLexer;
 %token AND "and";
 %token OR "or";
 %token NOT "not";
+%token COMMA ",";
 
-/* %printer { yyo << '(' << &$$ << ") " << $$; } <*>; */
-/* %printer { yyo << *$$; } <string_uptr>; */
+%printer { yyo << $$; } <std::string>;
 
 %%
 
@@ -85,19 +86,10 @@ file:
 
 %nterm <std::vector<TPtr>> statements;
 statements:
-    statement rest_statements {
+    statement statements {
         $$ = std::vector<TPtr>{};
         $$.push_back($1);
         $$.insert($$.end(), $2.begin(), $2.end());
-    }
-;
-
-%nterm <std::vector<TPtr>> rest_statements;
-rest_statements:
-    LF statement rest_statements {
-        $$ = std::vector<TPtr>{};
-        $$.push_back($2);
-        $$.insert($$.end(), $3.begin(), $3.end());
     }
     | %empty {
         $$ = std::vector<TPtr>{};
@@ -108,7 +100,7 @@ rest_statements:
 statement:
     compound_stmt {
         $$ = std::make_shared<TTree>(
-            "compound-statement",
+            "compound_stmt",
             $1
         );
     }
@@ -119,9 +111,9 @@ statement:
 
 %nterm <std::shared_ptr<TTree>> simple_stmt;
 simple_stmt:
-    expr {
+    expr LF {
         $$ = std::make_shared<TTree>(
-            "simple-statement",
+            "simple_stmt",
             $1
         );
     }
@@ -161,7 +153,7 @@ compound_stmt:
 %left "and";
 %precedence "not";
 %nonassoc "<" ">" "==" "!=";
-%left "+";
+%left "-" "+";
 %left "*";
 
 /* TODO: use union in generated C code for values (it's safe in C) */
@@ -190,6 +182,7 @@ expr:
     | expr "!=" expr { $$ = std::make_shared<TTree>("neq", $1, $3); }
     | expr "<" expr { $$ = std::make_shared<TTree>("less", $1, $3); }
     | expr ">" expr { $$ = std::make_shared<TTree>("greater", $1, $3); }
+    | expr "-" expr { $$ = std::make_shared<TTree>("sub", $1, $3); }
     | expr "+" expr { $$ = std::make_shared<TTree>("add", $1, $3); }
     | expr "*" expr { $$ = std::make_shared<TTree>("multiply", $1, $3); }
 ;

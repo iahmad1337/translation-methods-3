@@ -194,6 +194,47 @@ const std::vector<TParam> PARAMS = {
       {tkt::RPAREN, ")"},
     }
   },
+  {
+    R"(
+if 0:
+    1
+2
+)",
+    {
+      {tkt::IF, "if"},
+      {tkt::NUMBER, "0"},
+      {tkt::COLON, ":"},
+      {tkt::LF, ""},
+      {tkt::INDENT, ""},
+      {tkt::NUMBER, "1"},
+      {tkt::LF, ""},
+      {tkt::DEDENT, ""},
+      {tkt::NUMBER, "2"},
+      {tkt::LF, ""},
+    }
+  },
+  {
+    R"(
+if 1:
+    2
+    3
+4
+)",
+    {
+      {tkt::IF, "if"},
+      {tkt::NUMBER, "1"},
+      {tkt::COLON, ":"},
+      {tkt::LF, ""},
+      {tkt::INDENT, ""},
+      {tkt::NUMBER, "2"},
+      {tkt::LF, ""},
+      {tkt::NUMBER, "3"},
+      {tkt::LF, ""},
+      {tkt::DEDENT, ""},
+      {tkt::NUMBER, "4"},
+      {tkt::LF, ""},
+    }
+  },
 };
 
 TEST_P(TTokenizerTest, Tokens) {

@@ -30,12 +30,12 @@
 ID  [A-Za-z_][A-Za-z0-9_]*
 NUMBER [0-9]+
 STRING \"[^\n"]+\"
-/* LF [^ \n]+\n */
 LF [ ]*\n
 
 %%
 
-^[ ]*\n       {/* Ignore blank lines. TODO: move location by one line */}
+^[ ]*\n       {}
+^[ ]*$       {}
 ^[ ]*  {
     // TODO: move location everytime w
     // NOTE: this won't match on empty lines as the empty line rule precedes us
@@ -55,6 +55,11 @@ LF [ ]*\n
 "+"  {
         ctx.curToken = YYText();
         ctx.curTokenKind = yy::parser::token_kind_type::PLUS;
+        return ctx.curTokenKind;
+     }
+"-"  {
+        ctx.curToken = YYText();
+        ctx.curTokenKind = yy::parser::token_kind_type::MINUS;
         return ctx.curTokenKind;
      }
 "*"  {
@@ -120,6 +125,11 @@ LF [ ]*\n
 ">"  {
         ctx.curToken = YYText();
         ctx.curTokenKind = yy::parser::token_kind_type::GREATER;
+        return ctx.curTokenKind;
+     }
+","  {
+        ctx.curToken = YYText();
+        ctx.curTokenKind = yy::parser::token_kind_type::COMMA;
         return ctx.curTokenKind;
      }
 
