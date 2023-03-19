@@ -6,12 +6,13 @@ then
     exit 1
 fi
 
-for i in samples/*
+for i in samples/*.py
 do
     echo "Parsing $i:"
     cat "$i"
     echo "******************* Result of parsing *******************"
-    ./debug/parser -f "$i" -o "codegen/$i.c"
+    out="$i.c"
+    ./debug/pytoc -f "$i" -o "$out" && echo "Result written in $out"
     echo
 done
 

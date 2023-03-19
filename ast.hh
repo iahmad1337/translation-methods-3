@@ -114,30 +114,6 @@ constexpr auto C_TEMPLATE = R"(
 #include <stdio.h>
 #include <stdlib.h>
 
-enum EType {
-  NUMBER,
-  STRING
-};
-
-struct TVar {
-  union {
-    const char* str;
-    int num = 0;
-  };
-  EType type = NUMBER;
-};
-
-void print(TVar* v) {
-  switch (v->type) {
-    case NUMBER:
-      printf("%d\n", v->num);
-      break;
-    case STRING:
-      printf("%s\n", v->str);
-      break;
-  }
-}
-
 const char* input() {
   static const int MAX_STR_SIZE = 512;
   char* result = malloc(MAX_STR_SIZE);
@@ -145,8 +121,7 @@ const char* input() {
     perror("input allocation");
     abort();
   }
-  char* succ = gets_s(result, MAX_STR_SIZE);
-  if (!succ) {
+  if (!fgets(result, MAX_STR_SIZE, stdin)) {
     perror("input gets_s");
     abort();
   }
@@ -159,7 +134,7 @@ struct TRange {
   int step;
 };
 
-int InRange(const TRange* r, int i) {
+int InRange(const struct TRange* r, int i) {
   if (r->from < r->to) {
     return r->from <= i && i <= r->to;
   } else {
@@ -167,21 +142,16 @@ int InRange(const TRange* r, int i) {
   }
 }
 
-TVar {{vars}};
+int {{vars}};
 
 int main() {
-{{program}};
+{{program}}
 }
 )";
 
 constexpr auto FOR_TEMPLATE = R"(
 {
-  const TRange __{{iterator}}_range = {{range_expr}};
-  // const TRange __{{iterator}}_range = {
-  //   .from = {{from_expr}},
-  //   .to = {{to_expr}},
-  //   .step = {{step_expr}},
-  // };
+  const struct TRange __{{iterator}}_range = {{range_expr}};
   for (int {{iterator}} = __{{iterator}}_range.from; InRange(&__{{iterator}}_range, i); i += __{{iterator}}_range.step) {
 {{statements}}
   }
@@ -200,7 +170,7 @@ struct TPyToCVisitor {
   }
 
   std::string visit(TString* s) {
-    return utils::MakeString() << '"' << s->val << '"';;
+    return utils::MakeString() << '"' << s->val << '"';
   }
 
   std::string visit(TId* id) {
@@ -210,29 +180,36 @@ struct TPyToCVisitor {
   std::string visit(TTree* t) {
     spdlog::info("entering {}", t->name);
     if (t->name == "file") {
+      auto program = JoinChildren(t, "\n");
+      TLevelGuard _guard{&indentLevel};
       return utils::Replace(C_TEMPLATE, {
-          {"{{vars}}", utils::Join(", ", vars.begin(), vars.end())},
-          {"{{program}}", JoinChildren(t, "\n")},
+          {"{{vars}}", utils::Join(vars, ", ")},
+          {"{{program}}", AddIndent(program)},
       });
+    } else if (t->name == "statements") {
+      return JoinChildren(t, "\n");
     } else if (t->name == "if_stmt") {
       auto [condition, statements] = VisitChildren<2>(t);
 
+      TLevelGuard _guard{&indentLevel};
       return utils::Replace(IF_TEMPLATE, {
           {"{{condition}}", condition},
-          {"{{statements}}", statements},
+          {"{{statements}}", AddIndent(statements)},
       });
     } else if (t->name == "for_loop") {
       auto [iterator, range_expr, statements] = VisitChildren<3>(t);
 
+      TLevelGuard _guard{&indentLevel};
       return utils::Replace(FOR_TEMPLATE, {
           {"{{iterator}}", iterator},
           {"{{range_expr}}", range_expr},
-          {"{{statements}}", statements},
+          {"{{statements}}", AddIndent(statements)},
       });
     } else if (t->name == "assign") {
       auto [lhs, rhs] = VisitChildren<2>(t);
       vars.insert(lhs);
-      return utils::Format("% = %;", lhs, rhs);
+      spdlog::info("assigning to {}", lhs);
+      return utils::Format("% = %", lhs, rhs);
     } else if (t->name == "invoke") {
       auto funcName = t->children[0]->accept(this);
       auto argTree = dynamic_cast<TTree*>(t->children[1].get());
@@ -240,13 +217,28 @@ struct TPyToCVisitor {
       auto args = ProcessChildren(argTree);
       if (funcName == "print") {
         assert(args.size() == 1);
-        return utils::Format("print(&%)", args[0]);
+        if (args[0].front() == '"' && args[0].back() == '"') {
+          return utils::Format(R"(printf(%))", args[0]);
+        } else {
+          return utils::Format(R"(printf("\%d\\n", %))", args[0]);
+        }
       } else if (funcName == "int") {
         assert(args.size() == 1);
         return utils::Format("atoi(%)", args[0]);
       } else if (funcName == "input") {
         assert(args.size() == 0);
         return "input()";
+      } else if (funcName == "range") {
+        switch (args.size()) {
+          case 1:
+            return utils::Format("{ .from = 0, .to = %, .step = 1 }", args[0]);
+          case 2:
+            return utils::Format("{ .from = %, .to = %, .step = 1 }", args[0], args[1]);
+          case 3:
+            return utils::Format("{ .from = %, .to = %, .step = % }", args[0], args[1], args[2]);
+          default:
+            return "{ .from = 0, .to = -1, .step = 1 }";  // empty range on invalid call
+        }
       } else {
         return utils::Format("%(%)", funcName, utils::Join(", ", args.begin(), args.end()));
       }
@@ -255,9 +247,14 @@ struct TPyToCVisitor {
     } else if (t->name == "simple_stmt") {
       auto [stmt] = VisitChildren<1>(t);
       return utils::MakeString() << stmt << ";";
-    } else if (utils::OneOf(t->name, {"or", "and", "not", "eq", "neq", "less", "greater", "sub", "add", "multiply"})) {
+    } else if (utils::OneOf(t->name, {"||", "&&", "==", "!=", "<", ">", "-", "+", "*"})) {
+      // binary operators
       auto [lhs, rhs] = VisitChildren<2>(t);
-      return utils::Format("%(%, %)", t->name, lhs, rhs);
+      return utils::Format("(% % %)", lhs, t->name, rhs);
+    } else if (utils::OneOf(t->name, {"!"})) {
+      // unary operators
+      auto [arg] = VisitChildren<1>(t);
+      return utils::Format("(! %)", arg);
     } else {
       // else this is a wrapper-node that only has one child
       auto [unwrapped] = VisitChildren<1>(t);
@@ -289,14 +286,28 @@ private:
   }
 
   std::string AddIndent(std::string str) {
-    std::string newIndent = "\n";
-    for (int i = 0; i < indentLevel; i++) {
-      newIndent.append(INDENT);
+    if (str.back() == '\n') {
+      str.pop_back();
     }
+    constexpr auto newIndent = "\n  ";
+    str.insert(0, "  ");
     return utils::Replace(str, { {"\n", newIndent} });
   }
 
-  static constexpr auto INDENT = "  ";
-  int indentLevel{0};
+  struct TLevelGuard {
+    explicit TLevelGuard(int* level) : levelHolder{level} {
+      (*levelHolder)++;
+    }
+
+    ~TLevelGuard() {
+      assert(levelHolder);
+      (*levelHolder)--;
+    }
+
+  private:
+    int* levelHolder = nullptr;
+  };
+
+  int indentLevel{1};
   std::unordered_set<std::string> vars = { "__dummy" };
 };

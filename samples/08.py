@@ -2,7 +2,6 @@ l = 1
 r = 10
 step = 2
 
-r = range(l, r, step)
 print("Values in range:")
-for i in r:
+for i in range(l, r, step):
     print(i)

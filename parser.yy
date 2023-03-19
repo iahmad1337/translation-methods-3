@@ -169,16 +169,16 @@ expr:
         $$ = std::make_shared<TTree>("invoke", std::make_shared<TId>($1), std::make_shared<TTree>("arglist", $3));
     }
     | "(" expr ")" { $$ = $2; }
-    | expr "or" expr { $$ = std::make_shared<TTree>("or", $1, $3); }
-    | expr "and" expr { $$ = std::make_shared<TTree>("and", $1, $3); }
-    | "not" expr { $$ = std::make_shared<TTree>("not", $2); }
-    | expr "==" expr { $$ = std::make_shared<TTree>("eq", $1, $3); }
-    | expr "!=" expr { $$ = std::make_shared<TTree>("neq", $1, $3); }
-    | expr "<" expr { $$ = std::make_shared<TTree>("less", $1, $3); }
-    | expr ">" expr { $$ = std::make_shared<TTree>("greater", $1, $3); }
-    | expr "-" expr { $$ = std::make_shared<TTree>("sub", $1, $3); }
-    | expr "+" expr { $$ = std::make_shared<TTree>("add", $1, $3); }
-    | expr "*" expr { $$ = std::make_shared<TTree>("multiply", $1, $3); }
+    | expr "or" expr { $$ = std::make_shared<TTree>("||", $1, $3); }
+    | expr "and" expr { $$ = std::make_shared<TTree>("&&", $1, $3); }
+    | "not" expr { $$ = std::make_shared<TTree>("!", $2); }
+    | expr "==" expr { $$ = std::make_shared<TTree>("==", $1, $3); }
+    | expr "!=" expr { $$ = std::make_shared<TTree>("!=", $1, $3); }
+    | expr "<" expr { $$ = std::make_shared<TTree>("<", $1, $3); }
+    | expr ">" expr { $$ = std::make_shared<TTree>(">", $1, $3); }
+    | expr "-" expr { $$ = std::make_shared<TTree>("-", $1, $3); }
+    | expr "+" expr { $$ = std::make_shared<TTree>("+", $1, $3); }
+    | expr "*" expr { $$ = std::make_shared<TTree>("*", $1, $3); }
 ;
 
 %nterm <std::vector<TPtr>> arglist;
