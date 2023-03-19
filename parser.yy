@@ -99,10 +99,7 @@ statements:
 %nterm <std::shared_ptr<TTree>> statement;
 statement:
     compound_stmt {
-        $$ = std::make_shared<TTree>(
-            "compound_stmt",
-            $1
-        );
+        $$ = $1;
     }
     | simple_stmt {
         $$ = $1;
@@ -112,10 +109,7 @@ statement:
 %nterm <std::shared_ptr<TTree>> simple_stmt;
 simple_stmt:
     expr LF {
-        $$ = std::make_shared<TTree>(
-            "simple_stmt",
-            $1
-        );
+        $$ = std::make_shared<TTree>("simple_stmt", $1);
     }
 ;
 
@@ -125,7 +119,7 @@ simple_stmt:
 compound_stmt:
     "if" expr ":" LF INDENT statements DEDENT {
         $$ = std::make_shared<TTree>(
-            "if",
+            "if_stmt",
             std::make_shared<TTree>("condition", $2),
             std::make_shared<TTree>("statements", $6)
         );
@@ -133,9 +127,9 @@ compound_stmt:
     | "for" ID "in" expr ":" LF INDENT statements DEDENT {
 
         $$ = std::make_shared<TTree>(
-            "for-loop",
+            "for_loop",
             std::make_shared<TTree>("iterator", std::make_shared<TId>($2)),
-            std::make_shared<TTree>("condition", $4),
+            std::make_shared<TTree>("range_expr", $4),
             std::make_shared<TTree>("statements", $8)
         );
     }

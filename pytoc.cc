@@ -2,7 +2,6 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <optional>
 
 #include <spdlog/spdlog.h>
 #include <argparse/argparse.hpp>
@@ -12,7 +11,7 @@
 
 TPrintVisitor PV{std::cout, "    "};
 TNameVisitor NV;
-argparse::ArgumentParser program{"parser"};
+argparse::ArgumentParser program{"pytoc"};
 
 std::optional<TPtr> DoParse(std::istream& is) {
     auto lex = std::make_shared<TMyLexer>(&is);
@@ -32,8 +31,11 @@ int main(int argc, const char *argv[]) {
   *                                 Argparse                                 *
   ****************************************************************************/
 
+  argparse::ArgumentParser program("parser");
   program.add_argument("-f", "--file")
     .help("accept input from this file");
+  program.add_argument("-o", "--outfile")
+    .help("print the converted code to this file (write to stdout if not provided)");
   program.add_argument("-v", "--verbose")
     .default_value(false)
     .implicit_value(true);
@@ -59,7 +61,14 @@ int main(int argc, const char *argv[]) {
   if (program.present("-f")) {
       std::fstream fs{program.get<std::string>("-f")};
       if (auto res = DoParse(fs)) {
-        res.value()->accept(&PV);
+        TPyToCVisitor PTCV;
+        auto src = res.value()->accept(&PTCV);
+        if (program.present("-o")) {
+          std::ofstream outfile{program.get<std::string>("-o")};
+          outfile << src;
+        } else {
+          std::cout << src << std::endl;
+        }
       }
   } else {
     // interactive mode
@@ -83,7 +92,8 @@ int main(int argc, const char *argv[]) {
       line.push_back('\n');
       std::stringstream ss{line};
       if (auto res = DoParse(ss)) {
-        res.value()->accept(&PV);
+        TPyToCVisitor PTCV;
+        std::cout << res.value()->accept(&PTCV) << std::endl;
       }
     }
   }
