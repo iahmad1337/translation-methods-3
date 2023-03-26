@@ -6,57 +6,74 @@
 блоки.
 
 
-FIXME: у бизоновых правил есть приоритет (точно не помню какой), поэтому если я
-неправильно сочиню грамматику, возможны проблемы. Т.е. кажется что приоритет
-определяется порядком правил (надо проверить обязательно).
-
 Замечание: питону
 [не важны пустые строчки](https://stackoverflow.com/questions/60143061/meaning-of-an-empty-line-in-python-source-code-file)
 поэтому их можно игнорировать
 
 ```
+%start file;
+
 file:
-    statements EOF
+    statements
+;
 
 statements:
     statement statements
-    | EPS
+    | %empty
+;
 
+%nterm <std::shared_ptr<TTree>> statement;
 statement:
     compound_stmt
     | simple_stmt
+;
 
 simple_stmt:
-    expr
+    expr LF
+;
 
-// expr in `if` must be of type int
-// expr in `for` must be of special `range` type
 compound_stmt:
-    IF_KW expr COLON_SIGN INDENT statements DEDENT
-    | FOR_KW IDENTIFIER IN_KW expr COLON_SIGN INDENT statements DEDENT
+    "if" expr ":" LF INDENT statements DEDENT
+    | "for" ID "in" expr ":" LF INDENT statements DEDENT
+;
 
-// all expressions will be typed and the types will be inferred during semantic
-// analysis
+%right "=";
+%left "or";
+%left "and";
+%precedence "not";
+%nonassoc "<" ">" "==" "!=";
+%left "-" "+";
+%left "*";
 
-// See 2.2 of bison documentation for operator support
-// TODO: precedance for '=', '<', '+' and other operators
 expr:
     NUMBER
     | STRING
-    | IDENTIFIER
-    | IDENTIFIER '=' expr
-    | IDENTIFIER '(' arglist ')'
-    | '(' expr ')'
-    | expr '!=' expr
-    | expr '==' expr
-    | expr '<' expr
-    | expr '>' expr
-    | expr '+' expr
-    | expr '*' expr
+    | ID
+    | ID "=" expr
+    | ID "(" arglist ")"
+    | "(" expr ")"
+    | expr "or" expr
+    | expr "and" expr
+    | "not" expr
+    | expr "==" expr
+    | expr "!=" expr
+    | expr "<" expr
+    | expr ">" expr
+    | expr "-" expr
+    | expr "+" expr
+    | expr "*" expr
+;
 
 arglist:
-    | arglist ',' expr
-    | expr
+    expr arglist-cont
+    | %empty
+;
+
+arglist-cont:
+    %empty
+    | "," expr arglist-cont
+;
+
 ```
 
 
@@ -74,65 +91,29 @@ arglist:
 
 Список лексем (токенов):
 ```
-Токен | Описание
-IDENTIFIER | идентификатор (e.g. 'a', 'x', 'read', 'int', 'print', 'str')
-CONST | Численная константа
-
+%token <std::string> ID;
+%token <std::string> STRING;
+%token <std::string> NUMBER;
+%token INDENT;
+%token DEDENT;
+%token LF;
+%token EQ "==";
+%token NEQ "!=";
+%token LESS "<";
+%token GREATER ">";
+%token PLUS "+";
+%token MINUS "-";
+%token ASTERISK "*";
+%token ASS "=";
+%token LPAREN "(";
+%token RPAREN ")";
+%token COLON ":";
+%token IF "if";
+%token FOR "for";
+%token IN "in";
+%token AND "and";
+%token OR "or";
+%token NOT "not";
+%token COMMA ",";
 ```
-
-
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-+                                  Мои мысли                                   +
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-Итак, щас буду писать как я разбираюсь в бизоне, это не должно попасть в
-финальный отчет.
-- Semantic value - это например конкретное значение "245" - по сути это токен
-  NUMBER, но имеет semantic value равное 245.
-- Semantic actions - это как мы генерируем semantic value по правилу (например,
-  когда парсим "2 + 4").
-- GLR - когда возникает конфликты r/r или s/r, то он ветвится. Если какая-то
-  ветка фейлится, то она отбрасывается. Важно что при этом semantic values не
-  вычисляются а только "записываются" их вычисления, которые отыгрываются как
-  только остается одна ветка исполнения.
-- 1.8 описывает процесс создания парсера. Оказывается лексический анализатор
-  (токенайзер) я должен писать сам((( Вроде можно сгенерить с помощью Lex
-- Презентация про токенайзеры: https://ii.uni.wroc.pl/~nivelle/teaching/compilers2013/tokenizer.pdf
-- Остановился на 3 - Bison Grammar Files (page 47)
-- Похоже мне нужно почитать 10 - Parsers Written in Other Languages.
-- Могут возникнуть проблемы с динамической типизацией - на этапе семантического
-  анализа надо будет делать infer типа переменной по присваиваемому значению и
-  если последующие присвоения не согласуются по типам, то будем докладывать
-  ошибку. Btw, поскольку это будет уже семантический анализ, то нам хорошо бы
-  хранить позиции начала и конца каждой ноды в AST.
-- Инфиксные операторы легче всего определять не внутри грамматики а положиться
-  на уже встроенный в bison механизм. Он подробно описан в примере в пункте
-  2.2 (Infix notation calculator)
-- 3.7.13 описывает виды деклараций (например %union, %type и т.п.)
-- в 5.3 обсуждается приоритет операторов
-- как работает input: читаем строчку фиксированной длины через %s (ну или не
-  больше определенной длины) и если вышли за её пределы, то объявляем
-  пользователя дураком и завершаемся.
-- ввод чисел я думаю через что-то типа паттернматчинга реализовать. Т.е. я через
-  примитивное AST поматчусь и если структура подходит под какой-то паттерн, то я
-  в соответствии с ним делаю кодген (считать %d или ещё чето).
-- Почему написать напарсить flex-ом мои токены невозможно: https://cs.stackexchange.com/a/77992
-
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-+                                    Мысли+                                    +
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-- 3.5.2 - про локации. Скорее всего их нужно будет сохранить для читаемых ошибок
-
-if kek > 0:
-    a = 10
-    b = 20
-    if kek > 5:
-        c = 10
-        d = 20
-    e = 4
-
-Моё решение: в токенайзере добавлять токен типа DEDENT (поддерживаем уровень
-отступа на текущей строке). По умолчанию, отступы - 4 пробела. Любое другое
-число я запрещаю использовать, потому что это ёбнешься парсить. Табы не хочу
-поддерживать.
 
