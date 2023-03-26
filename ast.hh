@@ -116,7 +116,7 @@ constexpr auto C_TEMPLATE = R"(
 
 const char* input() {
   static const int MAX_STR_SIZE = 512;
-  char* result = malloc(MAX_STR_SIZE);
+  char* result = (char*)malloc(MAX_STR_SIZE);
   if (!result) {
     perror("input allocation");
     abort();
