@@ -164,6 +164,13 @@ constexpr auto FOR_TEMPLATE = R"(
 constexpr auto IF_TEMPLATE = R"(
 if ({{condition}}) {
 {{statements}}
+} else {
+{{if_cont}}
+}
+)";
+constexpr auto WHILE_TEMPLATE = R"(
+while ({{condition}}) {
+{{statements}}
 }
 )";
 
@@ -192,10 +199,23 @@ struct TPyToCVisitor {
     } else if (t->name == "statements") {
       return JoinChildren(t, "\n");
     } else if (t->name == "if_stmt") {
-      auto [condition, statements] = VisitChildren<2>(t);
+      auto [condition, statements, cont] = VisitChildren<3>(t);
 
       TLevelGuard _guard{&indentLevel};
       return utils::Replace(IF_TEMPLATE, {
+          {"{{condition}}", condition},
+          {"{{statements}}", AddIndent(statements)},
+          {"{{if_cont}}", AddIndent(cont)},
+      });
+    } else if (t->name == "else_stmt") {
+      auto [statements] = VisitChildren<1>(t);
+
+      return statements;
+    } else if (t->name == "while_loop") {
+      auto [condition, statements] = VisitChildren<2>(t);
+
+      TLevelGuard _guard{&indentLevel};
+      return utils::Replace(WHILE_TEMPLATE, {
           {"{{condition}}", condition},
           {"{{statements}}", AddIndent(statements)},
       });

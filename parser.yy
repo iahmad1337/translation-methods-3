@@ -66,6 +66,9 @@ struct TMyLexer;
 %token OR "or";
 %token NOT "not";
 %token COMMA ",";
+%token ELIF "elif";
+%token ELSE "else";
+%token WHILE "while";
 
 %printer { yyo << $$; } <std::string>;
 
@@ -117,11 +120,12 @@ simple_stmt:
 // expr in `for` must be of special `range` type
 %nterm <std::shared_ptr<TTree>> compound_stmt;
 compound_stmt:
-    "if" expr ":" LF INDENT statements DEDENT {
+    "if" expr ":" LF INDENT statements DEDENT if_cont {
         $$ = std::make_shared<TTree>(
-            "if_stmt",
-            std::make_shared<TTree>("condition", $2),
-            std::make_shared<TTree>("statements", $6)
+             "if_stmt",
+             std::make_shared<TTree>("condition", $2),
+             std::make_shared<TTree>("statements", $6),
+             $8
         );
     }
     | "for" ID "in" expr ":" LF INDENT statements DEDENT {
@@ -131,6 +135,37 @@ compound_stmt:
             std::make_shared<TTree>("iterator", std::make_shared<TId>($2)),
             std::make_shared<TTree>("range_expr", $4),
             std::make_shared<TTree>("statements", $8)
+        );
+    }
+    | "while" expr ":" LF INDENT statements DEDENT {
+         $$ = std::make_shared<TTree>(
+            "while_loop",
+             std::make_shared<TTree>("condition", $2),
+            std::make_shared<TTree>("statements", $6)
+         );
+    }
+;
+
+%nterm <std::shared_ptr<TTree>> if_cont;
+if_cont:
+    "elif" expr ":" LF INDENT statements DEDENT if_cont {
+        $$ = std::make_shared<TTree>(
+            "if_stmt",
+            std::make_shared<TTree>("condition", $2),
+            std::make_shared<TTree>("statements", $6),
+            $8
+        );
+    }
+    | "else" ":" LF INDENT statements DEDENT {
+        $$ = std::make_shared<TTree>(
+            "else_stmt",
+            std::make_shared<TTree>("statements", $5)
+        );
+    }
+    | %empty {
+        $$ = std::make_shared<TTree>(
+            "else_stmt",
+            std::make_shared<TTree>("statements")
         );
     }
 ;

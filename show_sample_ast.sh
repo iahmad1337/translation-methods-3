@@ -6,7 +6,7 @@ then
     exit 1
 fi
 
-for i in samples/*
+for i in samples/*py elif-samples/*py while-samples/*py
 do
     echo "Parsing $i:"
     cat "$i"

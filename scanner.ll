@@ -112,6 +112,21 @@ LF [ ]*\n
         ctx.curTokenKind = yy::parser::token_kind_type::IN;
         return ctx.curTokenKind;
       }
+"elif"  {
+        ctx.curToken = YYText();
+        ctx.curTokenKind = yy::parser::token_kind_type::ELIF;
+        return ctx.curTokenKind;
+     }
+"else"  {
+        ctx.curToken = YYText();
+        ctx.curTokenKind = yy::parser::token_kind_type::ELSE;
+        return ctx.curTokenKind;
+     }
+"while"  {
+         ctx.curToken = YYText();
+         ctx.curTokenKind = yy::parser::token_kind_type::WHILE;
+         return ctx.curTokenKind;
+     }
 ":"  {
         ctx.curToken = YYText();
         ctx.curTokenKind = yy::parser::token_kind_type::COLON;
